@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { getKeycloakInstance, initKeycloak, loginWithKeycloak, logoutKeycloak, getKeycloakUserInfo, isKeycloakConfigured } from '../lib/keycloak';
 
 const AuthContext = createContext();
 
@@ -9,28 +10,56 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
+  const [authMethod, setAuthMethod] = useState(null);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error getting session:', error);
+    const initializeAuth = async () => {
+      const kcConfigured = isKeycloakConfigured();
+
+      if (kcConfigured) {
+        const authenticated = await initKeycloak((keycloak) => {
+          const userInfo = getKeycloakUserInfo();
+          if (userInfo) {
+            setUser(userInfo);
+            setAuthMethod('keycloak');
+          }
+        });
+
+        if (!authenticated) {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error('Error getting session:', error);
+          } else {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setAuthMethod(session ? 'supabase' : null);
+          }
+        }
       } else {
-        setSession(session);
-        setUser(session?.user ?? null);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        } else {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setAuthMethod(session ? 'supabase' : null);
+        }
       }
+
       setLoading(false);
     };
 
-    getInitialSession();
+    initializeAuth();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        const keycloak = getKeycloakInstance();
+        if (!keycloak?.authenticated) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setAuthMethod(session ? 'supabase' : null);
+          setLoading(false);
+        }
       }
     );
 
@@ -88,11 +117,30 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const signInWithKeycloak = async () => {
+    try {
+      if (!isKeycloakConfigured()) {
+        return { error: { message: 'Keycloak not configured' } };
+      }
+      loginWithKeycloak();
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
+
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      return { error: null };
+      if (authMethod === 'keycloak') {
+        logoutKeycloak();
+        setUser(null);
+        setAuthMethod(null);
+        return { error: null };
+      } else {
+        const { error } = await supabase.auth.signOut();
+        if (error) throw error;
+        return { error: null };
+      }
     } catch (error) {
       return { error };
     }
@@ -115,11 +163,14 @@ export function AuthProvider({ children }) {
     user,
     session,
     loading,
+    authMethod,
     signUp,
     signIn,
     signInWithGoogle,
+    signInWithKeycloak,
     signOut,
-    resetPassword
+    resetPassword,
+    isKeycloakConfigured: isKeycloakConfigured()
   };
 
   return (

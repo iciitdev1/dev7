@@ -59,6 +59,7 @@ const en = {
     signOut: 'Sign Out',
     signInWithGoogle: 'Sign in with Google',
     signUpWithGoogle: 'Sign up with Google',
+    signInWithKeycloak: 'Sign in with Corporate SSO',
     createAccount: 'Create Account',
     signInToAccount: 'Sign In to Your Account',
     resetPassword: 'Reset Password',
@@ -90,6 +91,8 @@ const en = {
     authRequired: 'Authentication Required',
     authRequiredDescription: 'Please sign in to access your personalized dashboard and training exercises.',
     secureAuth: 'Your data is encrypted and secure',
+    orContinueWith: 'or continue with',
+    corporateUsers: 'Corporate Users',
     // Success messages
     signUpSuccess: 'Account created successfully! Redirecting to dashboard...',
     signInSuccess: 'Welcome back! Redirecting to dashboard...',
@@ -509,6 +512,7 @@ const ru = {
     signOut: 'Выйти',
     signInWithGoogle: 'Войти через Google',
     signUpWithGoogle: 'Регистрация через Google',
+    signInWithKeycloak: 'Войти через корпоративный SSO',
     createAccount: 'Создать аккаунт',
     signInToAccount: 'Войти в ваш аккаунт',
     resetPassword: 'Сброс пароля',
@@ -540,6 +544,8 @@ const ru = {
     authRequired: 'Требуется аутентификация',
     authRequiredDescription: 'Пожалуйста, войдите в систему для доступа к вашей персонализированной панели и тренировочным упражнениям.',
     secureAuth: 'Ваши данные зашифрованы и защищены',
+    orContinueWith: 'или продолжить с',
+    corporateUsers: 'Корпоративные пользователи',
     // Success messages
     signUpSuccess: 'Аккаунт создан успешно! Перенаправление на панель управления...',
     signInSuccess: 'Добро пожаловать! Перенаправление на панель управления...',

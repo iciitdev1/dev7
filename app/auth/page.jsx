@@ -14,7 +14,7 @@ import LanguageToggle from '../../components/LanguageToggle';
 
 export default function AuthPage() {
   const router = useRouter();
-  const { signUp, signIn, signInWithGoogle, resetPassword } = useAuth();
+  const { signUp, signIn, signInWithGoogle, signInWithKeycloak, resetPassword, isKeycloakConfigured } = useAuth();
   const { t } = useLanguage();
 
   const [mode, setMode] = useState('signin'); // signin, signup, reset
@@ -119,15 +119,30 @@ export default function AuthPage() {
 
     try {
       const { data, error } = await signInWithGoogle();
-      
+
       if (error) {
         setMessage({ type: 'error', text: getErrorMessage(error.message) });
       }
-      // Note: For OAuth, the user will be redirected to Google and then back to our callback
-      // No need to handle success here as the redirect will happen automatically
     } catch (error) {
       setMessage({ type: 'error', text: t('auth.unexpectedError') });
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeycloakSignIn = async () => {
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const { error } = await signInWithKeycloak();
+
+      if (error) {
+        setMessage({ type: 'error', text: getErrorMessage(error.message) });
+        setLoading(false);
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: t('auth.unexpectedError') });
       setLoading(false);
     }
   };
@@ -379,6 +394,46 @@ export default function AuthPage() {
                       </div>
                     )}
                   </Button>
+
+                  {isKeycloakConfigured && (
+                    <>
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white px-2 text-muted-foreground">
+                            {t('auth.corporateUsers')}
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleKeycloakSignIn}
+                        disabled={loading}
+                        className="w-full border-[#6495ED] hover:bg-[#6495ED]/10"
+                        size="lg"
+                      >
+                        {loading ? (
+                          <div className="flex items-center space-x-2">
+                            <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                            <span>{t('auth.processing')}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center space-x-2">
+                            <svg className="w-5 h-5 text-[#6495ED]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                            </svg>
+                            <span className="text-[#6495ED] font-medium">
+                              {t('auth.signInWithKeycloak')}
+                            </span>
+                          </div>
+                        )}
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
 
